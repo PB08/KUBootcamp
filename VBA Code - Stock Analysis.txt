@@ -1,0 +1,144 @@
+Sub main()
+
+'Loop through all the sheets. 
+    For Each ws In Worksheets
+
+        'Get a variables
+        Dim tickerName As String
+    
+        'Set a varable for holding a total count on the total volume of trade
+        Dim totalStockVolume As Double
+        totalStockVolume = 0
+
+        'Keep track of the location for each ticker name in the summary table
+        Dim summaryRow As Integer
+        summaryRow = 2
+        
+        Dim openingPrice As Double
+        openingPrice = ws.Cells(2, 3).Value
+        
+        Dim closingPrice As Double
+        Dim yearlyChange As Double
+        Dim percentChange As Double
+
+        'Label the Summary Table headers and challenge table
+        ws.Cells(1, 9).Value = "Ticker"
+        ws.Cells(1, 10).Value = "Yearly Change"
+        ws.Cells(1, 11).Value = "Percent Change"
+        ws.Cells(1, 12).Value = "Total Stock Volume"
+        ws.Cells(2, 15).Value = "Greatest % Increase"
+        ws.Cells(3, 15).Value = "Greatest % Decrease"
+        ws.Cells(4, 15).Value = "Greatest Total Volume"
+        ws.Cells(1, 16).Value = "Ticker"
+        ws.Cells(1, 17).Value = "Value"
+
+        'Count the number of rows
+        lastrow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+
+        'Loop through the rows by the ticker names
+
+        For i = 2 To lastrow
+
+            'Looks for the value of the next cell is different than that of the current cell
+            If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+        
+              'Set the ticker name
+              tickerName = ws.Cells(i, 1).Value
+
+              'Calculate the total stock volume
+              totalStockVolume = totalStockVolume + ws.Cells(i, 7).Value
+
+              'Add the ticker name in the summary table
+              ws.Range("I" & summaryRow).Value = tickerName
+
+              'Add the the total stock volume in the summary table
+              ws.Range("L" & summaryRow).Value = totalStockVolume
+
+              'Get closing price
+              closingPrice = ws.Cells(i, 6).Value
+
+              'Calculate yearly change
+               yearlyChange = (closingPrice - openingPrice)
+              
+              'Print the yearly change the summary table
+              ws.Range("J" & summaryRow).Value = yearlyChange
+
+              'Check for the non-divisibilty
+                If openingPrice = 0 Then
+                    percentChange = 0
+                
+                Else
+                    percentChange = yearlyChange / openingPrice
+                
+                End If
+
+              'Print the yearly change in the summary table
+              ws.Range("K" & summaryRow).Value = percentChange
+              ws.Range("K" & summaryRow).NumberFormat = "0.00%"
+   
+              'Reset the row counter, total stock volume and opening proce
+              summaryRow = summaryRow + 1
+              totalStockVolume = 0
+              openingPrice = ws.Cells(i + 1, 3)
+            
+            Else
+              
+               'Add the total stock volume
+              totalStockVolume = totalStockVolume + ws.Cells(i, 7).Value
+
+            
+            End If
+        
+        Next i
+
+    'Conditional formatting that will highlight positive change in green and negative change in red
+   
+    lastRow_summaryTable = ws.Cells(Rows.Count, 9).End(xlUp).Row
+    
+    'Color code yearly change
+        For i = 2 To lastRow_summaryTable
+            
+            If ws.Cells(i, 10).Value > 0 Then
+                ws.Cells(i, 10).Interior.ColorIndex = 10
+            
+            Else
+                ws.Cells(i, 10).Interior.ColorIndex = 3
+            
+            End If
+        
+        Next i
+
+
+    'Determine the max and min values in column "Percent Change" and max in column "Total Stock Volume"
+    ' I found code for finding the max and min value in a column on this website
+    ' https://www.ozgrid.com/forum/index.php?thread/87224-min-max-values-from-row-column-using-vba/
+    ' https://stackoverflow.com/questions/42633273/finding-max-of-a-column-in-vba/42633375
+    
+        For i = 2 To lastRow_summaryTable
+        
+            'Find the maximum percent change
+            If ws.Cells(i, 11).Value = Application.WorksheetFunction.Max(ws.Range("K2:K" & lastRow_summaryTable)) Then
+                ws.Cells(2, 16).Value = ws.Cells(i, 9).Value
+                ws.Cells(2, 17).Value = ws.Cells(i, 11).Value
+                ws.Cells(2, 17).NumberFormat = "0.00%"
+
+            'Find the minimum percent change
+            ElseIf ws.Cells(i, 11).Value = Application.WorksheetFunction.Min(ws.Range("K2:K" & lastRow_summaryTable)) Then
+                ws.Cells(3, 16).Value = ws.Cells(i, 9).Value
+                ws.Cells(3, 17).Value = ws.Cells(i, 11).Value
+                ws.Cells(3, 17).NumberFormat = "0.00%"
+            
+            'Find the maximum volume of trade
+            ElseIf ws.Cells(i, 12).Value = Application.WorksheetFunction.Max(ws.Range("L2:L" & lastRow_summaryTable)) Then
+                ws.Cells(4, 16).Value = ws.Cells(i, 9).Value
+                ws.Cells(4, 17).Value = ws.Cells(i, 12).Value
+            
+            End If
+        
+        Next i
+    
+    Next ws
+        
+End Sub
+
+
